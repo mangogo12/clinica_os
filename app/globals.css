@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #F0F2FF;
+    --foreground: #1A1A2E;
+    --sidebar: #1E2B8F;
+    --primary: #3B5BDB;
+    --surface: #ffffff;
+    --border: #E5E7EB;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: #F0F2FF;
+    color: #1A1A2E;
+    font-family: var(--font-inter), Inter, sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  /* Scrollbar personalizada */
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #c4c5d6; border-radius: 9999px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #747686; }
+
+  /* Card padrão */
+  .card {
+    background: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 24px;
+  }
+
+  /* Status badges */
+  .badge-success {
+    background: rgba(18,183,106,0.12);
+    color: #027A48;
+    border-radius: 9999px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 14px;
+  }
+  .badge-warning {
+    background: rgba(245,158,11,0.12);
+    color: #B45309;
+    border-radius: 9999px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 14px;
+  }
+  .badge-danger {
+    background: rgba(239,68,68,0.12);
+    color: #B91C1C;
+    border-radius: 9999px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 14px;
+  }
+  .badge-info {
+    background: rgba(59,130,246,0.12);
+    color: #1D4ED8;
+    border-radius: 9999px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 14px;
+  }
+  .badge-neutral {
+    background: rgba(100,100,120,0.10);
+    color: #444654;
+    border-radius: 9999px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 14px;
+  }
+}
