@@ -39,13 +39,9 @@ function saudacaoPorHora(): string {
   return 'Boa noite'
 }
 
-function tituloProfissional(nome: string, papel: string): string {
-  const primeiroNome = nome.split(' ')[0]
-  if (papel !== 'profissional') return primeiroNome
-  // Detecta gênero pelo final do primeiro nome
-  const lower = primeiroNome.toLowerCase()
-  const feminino = lower.endsWith('a') || lower.endsWith('ela') || lower.endsWith('ana') || lower.endsWith('ina')
-  return `${feminino ? 'Dra.' : 'Dr.'} ${primeiroNome}`
+function primeiroNomeCapitalizado(nome: string): string {
+  const primeiro = nome.split(' ')[0]
+  return primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase()
 }
 
 export function DashboardClient({ kpis, agendamentosHoje, agendamentosRecentes, chartData, nomeUsuario, papelUsuario }: Props) {
@@ -72,7 +68,7 @@ export function DashboardClient({ kpis, agendamentosHoje, agendamentosRecentes, 
   // Próximo agendamento hoje
   const proximoAg = agendamentosHoje.find(ag => ['agendado', 'confirmado'].includes(ag.status))
 
-  const nomeExibicao = tituloProfissional(nomeUsuario, papelUsuario)
+  const nomeExibicao = primeiroNomeCapitalizado(nomeUsuario)
 
   const kpiCards = [
     {

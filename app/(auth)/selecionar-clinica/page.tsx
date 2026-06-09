@@ -5,7 +5,14 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Building2, ChevronRight, HelpCircle, Plus, Users } from 'lucide-react'
+import { Building2, ChevronRight, HelpCircle, Plus } from 'lucide-react'
+
+const PAPEL_LABEL: Record<string, string> = {
+  admin: 'Administrador',
+  profissional: 'Profissional',
+  atendente: 'Atendente',
+  financeiro: 'Financeiro',
+}
 
 interface ClinicaVinculo {
   clinica_id: string
@@ -15,6 +22,8 @@ interface ClinicaVinculo {
     nome: string
     subdominio: string
     status: string
+    plano: string
+    configuracoes: Record<string, unknown> | null
   }
   total_pacientes?: number
 }
@@ -43,7 +52,7 @@ export default function SelecionarClinicaPage() {
 
       const { data: membros } = await supabase
         .from('membros_clinica')
-        .select('clinica_id, papel, clinica:clinicas(id, nome, subdominio, status)')
+        .select('clinica_id, papel, clinica:clinicas(id, nome, subdominio, status, plano, configuracoes)')
         .eq('usuario_id', user.id)
         .eq('status', 'ativo')
 
@@ -63,8 +72,13 @@ export default function SelecionarClinicaPage() {
     carregar()
   }, [])
 
-  function selecionarClinica(clinicaId: string) {
-    document.cookie = `clinica_id=${clinicaId}; path=/; max-age=86400; SameSite=Lax`
+  function selecionarClinica(v: ClinicaVinculo) {
+    const trialExpiresAt = (v.clinica.configuracoes as any)?.trial_expires_at
+    if (v.clinica.plano === 'starter' && trialExpiresAt && new Date(trialExpiresAt) < new Date()) {
+      supabase.auth.signOut().then(() => router.push('/plano-expirado'))
+      return
+    }
+    document.cookie = `clinica_id=${v.clinica_id}; path=/; max-age=86400; SameSite=Lax`
     router.push('/dashboard')
   }
 
@@ -108,7 +122,7 @@ export default function SelecionarClinicaPage() {
               <div className="flex items-center gap-2">
                 <div className="text-right">
                   <p className="text-[13px] font-semibold text-[#1A1A2E] leading-none">{usuario.nome}</p>
-                  <p className="text-[11px] text-[#9CA3AF]">Gestor Médico</p>
+                  <p className="text-[11px] text-[#9CA3AF]">{PAPEL_LABEL[vinculos[0]?.papel] ?? 'Usuário'}</p>
                 </div>
                 <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold">
                   {usuario.nome.charAt(0)}
@@ -132,7 +146,7 @@ export default function SelecionarClinicaPage() {
           {vinculos.map(v => (
             <button
               key={v.clinica_id}
-              onClick={() => selecionarClinica(v.clinica_id)}
+              onClick={() => selecionarClinica(v)}
               className="bg-white rounded-2xl shadow-card p-5 text-left hover:shadow-card-hover hover:-translate-y-0.5 transition-all group"
             >
               <div className="flex items-start justify-between mb-3">
@@ -145,9 +159,10 @@ export default function SelecionarClinicaPage() {
               </div>
               <h3 className="font-semibold text-[#1A1A2E] mb-0.5">{v.clinica.nome}</h3>
               <p className="text-[12px] text-[#9CA3AF] mb-3">{v.clinica.subdominio}.clinicaos.com.br</p>
-              <div className="flex items-center gap-1 text-[12px] text-[#9CA3AF]">
-                <Users size={12} />
-                <span>— Pacientes</span>
+              <div className="flex items-center gap-2 text-[12px] text-[#9CA3AF]">
+                <span className="inline-flex items-center gap-1 bg-[#F0F2FF] text-primary font-medium px-2 py-0.5 rounded-full text-[11px]">
+                  {PAPEL_LABEL[v.papel] ?? v.papel}
+                </span>
               </div>
               <div className="mt-4 w-full bg-primary text-white text-sm font-semibold py-2 rounded-lg flex items-center justify-center gap-1 group-hover:bg-primary-dark transition-colors">
                 Acessar <ChevronRight size={16} />

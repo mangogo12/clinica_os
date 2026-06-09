@@ -11,11 +11,13 @@ export default async function ProfissionaisPage() {
 
   await supabase.rpc('set_clinica_id', { p_clinica_id: clinicaId })
 
-  const { data: profissionais } = await supabase
+  const { data: profissionais, error: errProf } = await supabase
     .from('profissionais')
-    .select('id, nome, especialidade, registro_profissional, foto_url, status, horario_inicio, horario_fim')
+    .select('id, nome, especialidade, registro_profissional, foto_url, status')
     .eq('clinica_id', clinicaId)
     .order('nome')
+
+  if (errProf) console.error('[profissionais]', errProf.message)
 
   return (
     <ProfissionaisClient

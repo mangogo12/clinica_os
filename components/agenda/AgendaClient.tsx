@@ -52,6 +52,14 @@ export function AgendaClient({ agendamentos, profissionais, servicos, pacientes,
   const [novoNome, setNovoNome] = useState('')
   const [novoCpf, setNovoCpf] = useState('')
   const [novoTelefone, setNovoTelefone] = useState('')
+  const [novoCep, setNovoCep] = useState('')
+  const [novoLogradouro, setNovoLogradouro] = useState('')
+  const [novoNumero, setNovoNumero] = useState('')
+  const [novoComplemento, setNovoComplemento] = useState('')
+  const [novoBairro, setNovoBairro] = useState('')
+  const [novoCidade, setNovoCidade] = useState('')
+  const [novoEstado, setNovoEstado] = useState('')
+  const [buscandoCep, setBuscandoCep] = useState(false)
   const [cadastrandoPaciente, setCadastrandoPaciente] = useState(false)
   const [erroPaciente, setErroPaciente] = useState<string | null>(null)
 
@@ -81,6 +89,24 @@ export function AgendaClient({ agendamentos, profissionais, servicos, pacientes,
     setCpfBusca('')
   }
 
+  async function buscarCep(cep: string) {
+    const digits = cep.replace(/\D/g, '')
+    if (digits.length !== 8) return
+    setBuscandoCep(true)
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`)
+      const data = await res.json()
+      if (!data.erro) {
+        setNovoLogradouro(data.logradouro ?? '')
+        setNovoBairro(data.bairro ?? '')
+        setNovoCidade(data.localidade ?? '')
+        setNovoEstado(data.uf ?? '')
+      }
+    } finally {
+      setBuscandoCep(false)
+    }
+  }
+
   async function cadastrarNovoPaciente() {
     if (!novoNome.trim() || !novoTelefone.trim()) {
       setErroPaciente('Nome e telefone são obrigatórios.')
@@ -91,7 +117,18 @@ export function AgendaClient({ agendamentos, profissionais, servicos, pacientes,
     const res = await fetch('/api/pacientes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome: novoNome, cpf: novoCpf || null, telefone: novoTelefone }),
+      body: JSON.stringify({
+        nome: novoNome,
+        cpf: novoCpf || null,
+        telefone: novoTelefone,
+        cep: novoCep || null,
+        logradouro: novoLogradouro || null,
+        numero: novoNumero || null,
+        complemento: novoComplemento || null,
+        bairro: novoBairro || null,
+        cidade: novoCidade || null,
+        estado: novoEstado || null,
+      }),
     })
     const json = await res.json()
     if (!res.ok && res.status !== 200) {
@@ -102,6 +139,8 @@ export function AgendaClient({ agendamentos, profissionais, servicos, pacientes,
     selecionarPaciente({ id: json.id, nome: json.nome, cpf: json.cpf })
     setModoPaciente('buscar')
     setNovoNome(''); setNovoCpf(''); setNovoTelefone('')
+    setNovoCep(''); setNovoLogradouro(''); setNovoNumero(''); setNovoComplemento('')
+    setNovoBairro(''); setNovoCidade(''); setNovoEstado('')
     setCadastrandoPaciente(false)
   }
 
@@ -333,6 +372,65 @@ export function AgendaClient({ agendamentos, profissionais, servicos, pacientes,
                         placeholder="(00) 00000-0000"
                         className="w-full px-2.5 py-1.5 text-sm border border-[#E5E7EB] rounded-lg outline-none focus:border-primary placeholder:text-[#9CA3AF] bg-white"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-[#444654] mb-1">CEP</label>
+                      <div className="relative">
+                        <input value={novoCep}
+                          onChange={e => { setNovoCep(e.target.value); buscarCep(e.target.value) }}
+                          placeholder="00000-000"
+                          maxLength={9}
+                          className="w-full px-2.5 py-1.5 text-sm border border-[#E5E7EB] rounded-lg outline-none focus:border-primary placeholder:text-[#9CA3AF] bg-white"
+                        />
+                        {buscandoCep && <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-[#9CA3AF]">buscando...</span>}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-[#444654] mb-1">Logradouro</label>
+                      <input value={novoLogradouro} onChange={e => setNovoLogradouro(e.target.value)}
+                        placeholder="Rua, Av., Alameda..."
+                        className="w-full px-2.5 py-1.5 text-sm border border-[#E5E7EB] rounded-lg outline-none focus:border-primary placeholder:text-[#9CA3AF] bg-white"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-medium text-[#444654] mb-1">Número</label>
+                        <input value={novoNumero} onChange={e => setNovoNumero(e.target.value)}
+                          placeholder="123"
+                          className="w-full px-2.5 py-1.5 text-sm border border-[#E5E7EB] rounded-lg outline-none focus:border-primary placeholder:text-[#9CA3AF] bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-medium text-[#444654] mb-1">Complemento</label>
+                        <input value={novoComplemento} onChange={e => setNovoComplemento(e.target.value)}
+                          placeholder="Apto, Bloco..."
+                          className="w-full px-2.5 py-1.5 text-sm border border-[#E5E7EB] rounded-lg outline-none focus:border-primary placeholder:text-[#9CA3AF] bg-white"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-medium text-[#444654] mb-1">Bairro</label>
+                        <input value={novoBairro} onChange={e => setNovoBairro(e.target.value)}
+                          placeholder="Bairro"
+                          className="w-full px-2.5 py-1.5 text-sm border border-[#E5E7EB] rounded-lg outline-none focus:border-primary placeholder:text-[#9CA3AF] bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-medium text-[#444654] mb-1">Cidade</label>
+                        <input value={novoCidade} onChange={e => setNovoCidade(e.target.value)}
+                          placeholder="Cidade"
+                          className="w-full px-2.5 py-1.5 text-sm border border-[#E5E7EB] rounded-lg outline-none focus:border-primary placeholder:text-[#9CA3AF] bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-medium text-[#444654] mb-1">UF</label>
+                        <input value={novoEstado} onChange={e => setNovoEstado(e.target.value)}
+                          placeholder="SP"
+                          maxLength={2}
+                          className="w-full px-2.5 py-1.5 text-sm border border-[#E5E7EB] rounded-lg outline-none focus:border-primary placeholder:text-[#9CA3AF] bg-white"
+                        />
+                      </div>
                     </div>
                     {erroPaciente && <p className="text-[11px] text-red-600">{erroPaciente}</p>}
                     <button type="button" onClick={cadastrarNovoPaciente} disabled={cadastrandoPaciente}

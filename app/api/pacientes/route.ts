@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 
 export async function POST(req: NextRequest) {
@@ -11,14 +11,13 @@ export async function POST(req: NextRequest) {
   const clinicaId = cookieStore.get('clinica_id')?.value
   if (!clinicaId) return NextResponse.json({ error: 'Clínica não selecionada.' }, { status: 400 })
 
-  await supabase.rpc('set_clinica_id', { p_clinica_id: clinicaId })
-
-  const { nome, cpf, telefone } = await req.json()
+  const { nome, cpf, telefone, cep, logradouro, numero, complemento, bairro, cidade, estado } = await req.json()
   if (!nome || !telefone) return NextResponse.json({ error: 'Nome e telefone são obrigatórios.' }, { status: 400 })
 
-  // Verificar se CPF já existe nessa clínica
+  const admin = await createAdminClient()
+
   if (cpf) {
-    const { data: existing } = await supabase
+    const { data: existing } = await admin
       .from('pacientes')
       .select('id, nome')
       .eq('clinica_id', clinicaId)
@@ -30,9 +29,22 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('pacientes')
-    .insert({ clinica_id: clinicaId, nome, cpf: cpf || null, telefone, fonte: 'cadastro_manual' })
+    .insert({
+      clinica_id: clinicaId,
+      nome,
+      cpf: cpf || null,
+      telefone,
+      fonte: 'cadastro_manual',
+      cep: cep || null,
+      logradouro: logradouro || null,
+      numero: numero || null,
+      complemento: complemento || null,
+      bairro: bairro || null,
+      cidade: cidade || null,
+      estado: estado || null,
+    })
     .select('id, nome, cpf')
     .single()
 
@@ -49,10 +61,9 @@ export async function GET(req: NextRequest) {
   const clinicaId = cookieStore.get('clinica_id')?.value
   if (!clinicaId) return NextResponse.json([], { status: 200 })
 
-  await supabase.rpc('set_clinica_id', { p_clinica_id: clinicaId })
-
+  const admin = await createAdminClient()
   const cpf = req.nextUrl.searchParams.get('cpf')
-  let query = supabase.from('pacientes').select('id, nome, cpf, telefone').eq('clinica_id', clinicaId)
+  let query = admin.from('pacientes').select('id, nome, cpf, telefone').eq('clinica_id', clinicaId)
 
   if (cpf) query = query.ilike('cpf', `%${cpf.replace(/\D/g, '')}%`)
 

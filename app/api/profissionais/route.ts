@@ -102,5 +102,12 @@ export async function POST(req: NextRequest) {
     .update({ cpf: cpf ?? null, email, telefone: telefone ?? null, rqe: rqe ?? null, endereco: endereco ?? null, usuario_id: usuarioId })
     .eq('id', profissional.id)
 
-  return NextResponse.json({ ok: true }, { status: 201 })
+  return NextResponse.json({
+    id: profissional.id,
+    nome,
+    especialidade: especialidade ?? 'Clínica Geral',
+    registro_profissional: crm ?? null,
+    foto_url: foto_url ?? null,
+    status: 'ativo',
+  }, { status: 201 })
 }

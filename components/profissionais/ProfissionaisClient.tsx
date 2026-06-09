@@ -38,8 +38,6 @@ interface Profissional {
   registro_profissional: string | null
   foto_url: string | null
   status: string
-  horario_inicio: string
-  horario_fim: string
 }
 
 interface Props {
@@ -252,9 +250,6 @@ export function ProfissionaisClient({ profissionais: inicial, clinicaId }: Props
             </div>
             <div className="flex items-center justify-between">
               <span className={STATUS_STYLES[p.status] ?? 'badge-neutral'}>{STATUS_LABELS[p.status] ?? p.status}</span>
-              <div className="flex items-center gap-1 text-[11px] text-[#9CA3AF]">
-                ⏰ <span>{p.horario_inicio.substring(0, 5)} - {p.horario_fim.substring(0, 5)}</span>
-              </div>
             </div>
             <button className="mt-3 w-full flex items-center justify-center gap-1 text-[12px] text-[#9CA3AF] hover:text-primary transition-colors">
               Ver detalhes <ChevronRight size={14} />
