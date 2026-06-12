@@ -37,6 +37,8 @@ export function formatPhone(phone: string): string {
   return digits.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3')
 }
 
+export const STATUS_AGENDAMENTO_VALUES = ['agendado', 'confirmado', 'em_atendimento', 'concluido', 'cancelado', 'falta'] as const
+
 export function statusAgendamentoLabel(status: string): string {
   const map: Record<string, string> = {
     agendado: 'Agendado',
@@ -61,6 +63,25 @@ export function statusAgendamentoBadge(status: string): string {
   return map[status] ?? 'badge-neutral'
 }
 
+export const CATEGORIA_FINANCEIRA_LABELS: Record<string, string> = {
+  consulta: 'Consulta',
+  exame: 'Exame',
+  procedimento: 'Procedimento',
+  convenio: 'Convênio',
+  aluguel: 'Aluguel',
+  salario: 'Salário',
+  material: 'Material',
+  marketing: 'Marketing',
+  outros: 'Outros',
+}
+
+export const FONTE_PACIENTE_LABELS: Record<string, string> = {
+  agendamento_publico: 'Agend. Público',
+  cadastro_manual: 'Cadastro Manual',
+  indicacao: 'Indicação',
+  convenio: 'Convênio',
+}
+
 export function statusPacienteBadge(status: string): string {
   const map: Record<string, string> = {
     ativo: 'badge-success',
@@ -68,6 +89,8 @@ export function statusPacienteBadge(status: string): string {
     alta: 'badge-info',
     em_tratamento: 'badge-warning',
     aguardando: 'badge-neutral',
+    marcado: 'badge-info',
+    atendido: 'badge-success',
   }
   return map[status] ?? 'badge-neutral'
 }

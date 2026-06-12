@@ -1,4 +1,4 @@
-export default function LoadingDashboard() {
+export default function LoadingInicio() {
   return (
     <div className="space-y-6 animate-pulse">
       <div className="bg-primary/80 rounded-2xl h-[120px]" />

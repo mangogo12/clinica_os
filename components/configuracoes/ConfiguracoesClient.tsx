@@ -4,16 +4,18 @@ import { useState } from 'react'
 import { Plus, Pencil, ToggleLeft, ToggleRight } from 'lucide-react'
 
 const PAPEL_LABELS: Record<string, string> = {
-  admin: 'Admin',
-  atendente: 'Secretária Administrativa',
-  profissional: 'Profissional',
+  admin: 'Administrador',
+  medico: 'Médico',
+  medico_admin: 'Médico Administrador',
   financeiro: 'Financeiro',
+  atendente: 'Atendente',
 }
 const PAPEL_COLORS: Record<string, string> = {
   admin: 'text-primary',
-  atendente: 'text-purple-600',
-  profissional: 'text-green-600',
+  medico: 'text-green-600',
+  medico_admin: 'text-indigo-600',
   financeiro: 'text-orange-600',
+  atendente: 'text-purple-600',
 }
 const STATUS_BADGE: Record<string, string> = {
   ativo: 'badge-success',

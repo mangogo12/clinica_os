@@ -11,10 +11,10 @@ create extension if not exists "pg_trgm";  -- busca textual
 
 create type plano_tipo         as enum ('starter', 'pro', 'enterprise');
 create type status_clinica     as enum ('ativo', 'suspenso', 'cancelado', 'pendente');
-create type papel_membro       as enum ('admin', 'atendente', 'profissional', 'financeiro');
+create type papel_membro       as enum ('admin', 'atendente', 'financeiro', 'medico', 'medico_admin');
 create type status_membro      as enum ('ativo', 'inativo', 'pendente');
 create type status_profissional as enum ('ativo', 'inativo', 'licenca_medica', 'ferias');
-create type status_paciente    as enum ('ativo', 'inativo', 'alta', 'em_tratamento', 'aguardando');
+create type status_paciente    as enum ('ativo', 'inativo', 'alta', 'em_tratamento', 'aguardando', 'agendado', 'confirmado', 'em_atendimento', 'concluido', 'cancelado', 'falta');
 create type fonte_paciente     as enum ('agendamento_publico', 'cadastro_manual', 'indicacao', 'convenio');
 create type status_agendamento as enum ('agendado', 'confirmado', 'em_atendimento', 'concluido', 'cancelado', 'falta');
 create type origem_agendamento as enum ('dashboard', 'publica', 'api');

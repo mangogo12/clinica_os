@@ -79,7 +79,7 @@ export default function SelecionarClinicaPage() {
       return
     }
     document.cookie = `clinica_id=${v.clinica_id}; path=/; max-age=86400; SameSite=Lax`
-    router.push('/dashboard')
+    router.push('/inicio')
   }
 
   const statusColor: Record<string, string> = {

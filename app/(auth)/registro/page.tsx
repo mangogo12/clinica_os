@@ -120,7 +120,7 @@ export default function RegistroPage() {
     }
 
     document.cookie = `clinica_id=${json.clinicaId}; path=/; max-age=86400; SameSite=Lax`
-    router.push('/dashboard')
+    router.push('/inicio')
   }
 
   if (step === 'sucesso') {

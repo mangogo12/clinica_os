@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   const clinicaId = cookieStore.get('clinica_id')?.value
   if (!clinicaId) return NextResponse.json({ error: 'Clínica não selecionada.' }, { status: 400 })
 
-  const { nome, cpf, telefone, cep, logradouro, numero, complemento, bairro, cidade, estado } = await req.json()
+  const { nome, cpf, telefone, email, cep, logradouro, numero, complemento, bairro, cidade, estado } = await req.json()
   if (!nome || !telefone) return NextResponse.json({ error: 'Nome e telefone são obrigatórios.' }, { status: 400 })
 
   const admin = await createAdminClient()
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
       nome,
       cpf: cpf || null,
       telefone,
+      email: email || null,
       fonte: 'cadastro_manual',
       cep: cep || null,
       logradouro: logradouro || null,
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
       cidade: cidade || null,
       estado: estado || null,
     })
-    .select('id, nome, cpf')
+    .select('id, nome, cpf, email, telefone, status, fonte, ultima_consulta, criado_em, profissional_responsavel:profissionais(id, nome)')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

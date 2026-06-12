@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabaseUser.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
 
-  const { clinicaId, nome, email, senha, telefone, cpf, crm, rqe, endereco, foto_url, especialidade, emailJaExiste } = await req.json()
+  const { clinicaId, nome, email, senha, telefone, cpf, crm, rqe, endereco, foto_url, especialidade, emailJaExiste, servicoIds } = await req.json()
 
   if (!clinicaId || !nome || !email || !crm) {
     return NextResponse.json({ error: 'Dados incompletos.' }, { status: 400 })
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
   } else {
     const { data: novoMembro, error: errMembro } = await supabase
       .from('membros_clinica')
-      .insert({ clinica_id: clinicaId, usuario_id: usuarioId, papel: 'profissional', status: 'ativo' })
+      .insert({ clinica_id: clinicaId, usuario_id: usuarioId, papel: 'medico', status: 'ativo' })
       .select('id')
       .single()
 
@@ -102,12 +102,30 @@ export async function POST(req: NextRequest) {
     .update({ cpf: cpf ?? null, email, telefone: telefone ?? null, rqe: rqe ?? null, endereco: endereco ?? null, usuario_id: usuarioId })
     .eq('id', profissional.id)
 
+  // Vincular serviços que este profissional realiza
+  if (Array.isArray(servicoIds) && servicoIds.length > 0) {
+    await supabase.from('profissionais_servicos').insert(
+      servicoIds.map((servicoId: string) => ({
+        clinica_id: clinicaId,
+        profissional_id: profissional.id,
+        servico_id: servicoId,
+      }))
+    )
+  }
+
   return NextResponse.json({
-    id: profissional.id,
+    id: membroId,
+    papel: 'medico',
+    statusMembro: 'ativo',
     nome,
-    especialidade: especialidade ?? 'Clínica Geral',
-    registro_profissional: crm ?? null,
-    foto_url: foto_url ?? null,
-    status: 'ativo',
+    email,
+    telefone: telefone ?? null,
+    avatarUrl: foto_url ?? null,
+    profissional: {
+      id: profissional.id,
+      especialidade: especialidade ?? 'Clínica Geral',
+      registroProfissional: crm ?? null,
+      status: 'ativo',
+    },
   }, { status: 201 })
 }

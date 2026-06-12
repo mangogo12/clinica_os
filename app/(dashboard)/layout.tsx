@@ -3,6 +3,9 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
+import { PontoEntradaModal } from '@/components/ponto/PontoEntradaModal'
+
+export const dynamic = 'force-dynamic'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -47,14 +50,30 @@ export default async function DashboardLayout({ children }: { children: React.Re
     }
   }
 
+  // Controle de ponto: status de hoje do usuário logado
+  const inicioDia = new Date()
+  inicioDia.setHours(0, 0, 0, 0)
+  const { data: registrosPontoHoje } = await supabase
+    .from('registros_ponto')
+    .select('tipo, registrado_em')
+    .eq('clinica_id', clinicaId)
+    .eq('usuario_id', user.id)
+    .gte('registrado_em', inicioDia.toISOString())
+    .order('registrado_em')
+
+  const entradaRegistrada = (registrosPontoHoje ?? []).some(r => r.tipo === 'entrada')
+  const saidaRegistradaEm = [...(registrosPontoHoje ?? [])].reverse().find(r => r.tipo === 'saida')?.registrado_em ?? null
+
   return (
     <div className="min-h-screen bg-[#F0F2FF]">
+      <PontoEntradaModal registrado={entradaRegistrada} />
       <Sidebar
         nomeClinica={clinica.nome}
         nomeUsuario={perfil?.nome_completo ?? user.email?.split('@')[0] ?? 'Usuário'}
         papelUsuario={membro.papel}
         avatarUrl={perfil?.avatar_url ?? undefined}
         userId={user.id}
+        saidaRegistradaEm={saidaRegistradaEm}
       />
       <div className="ml-[260px] flex flex-col min-h-screen">
         <Header />

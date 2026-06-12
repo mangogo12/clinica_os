@@ -4,6 +4,7 @@ import { FinanceiroClient, type Transacao } from '@/components/financeiro/Financ
 import { registrarAuditoria } from '@/lib/auditoria'
 
 export const metadata = { title: 'Financeiro â€” ClinicaOS' }
+export const dynamic = 'force-dynamic'
 
 export default async function FinanceiroPage() {
   const supabase = await createClient()

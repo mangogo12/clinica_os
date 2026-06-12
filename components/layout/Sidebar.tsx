@@ -5,16 +5,18 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
-  LayoutDashboard, Calendar, Users, UserCheck, DollarSign,
-  Settings, LogOut, Stethoscope,
+  Home, LayoutDashboard, Calendar, Users, UserCheck, DollarSign,
+  Settings, LogOut, Stethoscope, ClipboardList, Clock, Check,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatTime } from '@/lib/utils'
 
 const navItems = [
-  { href: '/dashboard',       label: 'Dashboard',       icon: LayoutDashboard },
+  { href: '/inicio',           label: 'Início',          icon: Home },
+  { href: '/dashboards',       label: 'Dashboards',      icon: LayoutDashboard },
   { href: '/agenda',          label: 'Agenda',           icon: Calendar },
-  { href: '/clientes',        label: 'Clientes',         icon: Users },
+  { href: '/pacientes',       label: 'Pacientes',        icon: Users },
   { href: '/profissionais',   label: 'Profissionais',    icon: UserCheck },
+  { href: '/servicos',        label: 'Serviços',         icon: ClipboardList },
   { href: '/financeiro',      label: 'Financeiro',       icon: DollarSign },
   { href: '/configuracoes',   label: 'Configurações',    icon: Settings },
 ]
@@ -25,9 +27,10 @@ interface SidebarProps {
   papelUsuario: string
   avatarUrl?: string
   userId: string
+  saidaRegistradaEm?: string | null
 }
 
-export function Sidebar({ nomeClinica, nomeUsuario, papelUsuario, avatarUrl, userId }: SidebarProps) {
+export function Sidebar({ nomeClinica, nomeUsuario, papelUsuario, avatarUrl, userId, saidaRegistradaEm = null }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -35,12 +38,29 @@ export function Sidebar({ nomeClinica, nomeUsuario, papelUsuario, avatarUrl, use
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [popupAberto, setPopupAberto] = useState(false)
   const [stats, setStats] = useState<{ diasTrabalhados: number; pacientesAtendidos: number } | null>(null)
+  const [saidaRegistrada, setSaidaRegistrada] = useState(saidaRegistradaEm)
+  const [registrandoSaida, setRegistrandoSaida] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   async function handleLogout() {
     await supabase.auth.signOut()
     document.cookie = 'clinica_id=; path=/; max-age=0'
     router.push('/login')
+  }
+
+  async function handleRegistrarSaida() {
+    if (registrandoSaida || saidaRegistrada) return
+    setRegistrandoSaida(true)
+    const res = await fetch('/api/ponto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo: 'saida' }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setSaidaRegistrada(data.registrado_em)
+    }
+    setRegistrandoSaida(false)
   }
 
   async function abrirPopup() {
@@ -151,6 +171,23 @@ export function Sidebar({ nomeClinica, nomeUsuario, papelUsuario, avatarUrl, use
             <LogOut size={15} />
           </button>
         </div>
+
+        <button
+          onClick={e => { e.stopPropagation(); handleRegistrarSaida() }}
+          disabled={registrandoSaida || !!saidaRegistrada}
+          className={cn(
+            'mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors disabled:cursor-default',
+            saidaRegistrada
+              ? 'bg-white/5 text-blue-300'
+              : 'bg-white/10 text-white hover:bg-white/20 disabled:opacity-60',
+          )}
+          title="Registrar saída do expediente"
+        >
+          {saidaRegistrada
+            ? <><Check size={12} /> Saída às {formatTime(saidaRegistrada)}</>
+            : <><Clock size={12} /> {registrandoSaida ? 'Registrando...' : 'Registrar saída'}</>
+          }
+        </button>
       </div>
     </aside>
 

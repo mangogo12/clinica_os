@@ -8,7 +8,7 @@ const PUBLIC_PATHS = [
   '/favicon.ico',
 ]
 
-const DASHBOARD_PATHS = ['/dashboard', '/agenda', '/clientes', '/profissionais', '/servicos', '/equipe', '/financeiro', '/configuracoes']
+const DASHBOARD_PATHS = ['/inicio', '/dashboards', '/agenda', '/pacientes', '/profissionais', '/servicos', '/equipe', '/financeiro', '/configuracoes']
 
 function isDashboardRoute(pathname: string) {
   return DASHBOARD_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))

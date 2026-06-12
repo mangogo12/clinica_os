@@ -1,4 +1,4 @@
-export default function LoadingClientes() {
+export default function LoadingPacientes() {
   return (
     <div className="space-y-4 animate-pulse">
       <div className="flex justify-between">

@@ -1,19 +1,23 @@
-﻿import { cookies } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
-import { ClientesClient, type Paciente } from '@/components/clientes/ClientesClient'
+import { cookies } from 'next/headers'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { PacientesClient, type Paciente } from '@/components/pacientes/PacientesClient'
 import { registrarAuditoria } from '@/lib/auditoria'
+import { reconciliarAtendimentos } from '@/lib/agenda'
 
-export const metadata = { title: 'Clientes â€” ClinicaOS' }
+export const metadata = { title: 'Pacientes — ClinicaOS' }
+export const dynamic = 'force-dynamic'
 
-export default async function ClientesPage() {
+export default async function PacientesPage() {
   const supabase = await createClient()
   const cookieStore = await cookies()
   const clinicaId = cookieStore.get('clinica_id')?.value ?? ''
   const { data: { user } } = await supabase.auth.getUser()
 
-  await supabase.rpc('set_clinica_id', { p_clinica_id: clinicaId })
+  const admin = await createAdminClient()
 
-  const { data: pacientes } = await supabase
+  await reconciliarAtendimentos(admin, clinicaId)
+
+  const { data: pacientes } = await admin
     .from('pacientes')
     .select(`
       id, nome, cpf, email, telefone, status, fonte,
@@ -31,6 +35,5 @@ export default async function ClientesPage() {
     detalhes: { count: pacientes?.length },
   })
 
-  return <ClientesClient pacientes={(pacientes ?? []) as unknown as Paciente[]} clinicaId={clinicaId} />
+  return <PacientesClient pacientes={(pacientes ?? []) as unknown as Paciente[]} clinicaId={clinicaId} />
 }
-

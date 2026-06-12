@@ -1,15 +1,15 @@
 import { cookies } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
-import { DashboardClient, type AgendamentoItem } from '@/components/dashboard/DashboardClient'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { InicioClient, type AgendamentoItem } from '@/components/inicio/InicioClient'
 
-export const metadata = { title: 'Dashboard — ClinicaOS' }
+export const metadata = { title: 'Início — ClinicaOS' }
+export const dynamic = 'force-dynamic'
 
-export default async function DashboardPage() {
+export default async function InicioPage() {
   const supabase = await createClient()
+  const admin = await createAdminClient()
   const cookieStore = await cookies()
   const clinicaId = cookieStore.get('clinica_id')?.value ?? ''
-
-  await supabase.rpc('set_clinica_id', { p_clinica_id: clinicaId })
 
   const hoje = new Date()
   const hojeStr = hoje.toISOString().split('T')[0]
@@ -35,7 +35,7 @@ export default async function DashboardPage() {
     { data: perfilUser },
     { data: membroUser },
   ] = await Promise.all([
-    supabase
+    admin
       .from('agendamentos')
       .select('id, data_hora_inicio, data_hora_fim, status, paciente:pacientes(nome), profissional:profissionais(nome), servico:servicos(nome)')
       .eq('clinica_id', clinicaId)
@@ -43,14 +43,14 @@ export default async function DashboardPage() {
       .lte('data_hora_inicio', fimHoje)
       .order('data_hora_inicio'),
 
-    supabase
+    admin
       .from('agendamentos')
       .select('id, data_hora_inicio, status, paciente:pacientes(nome), profissional:profissionais(nome), servico:servicos(nome, preco)')
       .eq('clinica_id', clinicaId)
       .order('data_hora_inicio', { ascending: false })
       .limit(5),
 
-    supabase
+    admin
       .from('transacoes')
       .select('valor')
       .eq('clinica_id', clinicaId)
@@ -58,26 +58,26 @@ export default async function DashboardPage() {
       .eq('status', 'confirmado')
       .gte('data_transacao', inicioMes.split('T')[0]),
 
-    supabase
+    admin
       .from('agendamentos')
       .select('id', { count: 'exact', head: true })
       .eq('clinica_id', clinicaId)
       .gte('data_hora_inicio', inicioMes),
 
-    supabase
+    admin
       .from('agendamentos')
       .select('id', { count: 'exact', head: true })
       .eq('clinica_id', clinicaId)
       .eq('status', 'falta')
       .gte('data_hora_inicio', inicioMes),
 
-    supabase
+    admin
       .from('pacientes')
       .select('id', { count: 'exact', head: true })
       .eq('clinica_id', clinicaId)
       .gte('criado_em', inicioMes),
 
-    supabase
+    admin
       .from('transacoes')
       .select('valor, data_transacao')
       .eq('clinica_id', clinicaId)
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
       .eq('id', user!.id)
       .single(),
 
-    supabase
+    admin
       .from('membros_clinica')
       .select('papel')
       .eq('clinica_id', clinicaId)
@@ -115,7 +115,7 @@ export default async function DashboardPage() {
   })
 
   return (
-    <DashboardClient
+    <InicioClient
       agendamentosHoje={(agendamentosHoje ?? []) as unknown as AgendamentoItem[]}
       agendamentosRecentes={(agendamentosRecentes ?? []) as unknown as AgendamentoItem[]}
       chartData={chartData}

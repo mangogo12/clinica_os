@@ -6,6 +6,9 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { Calendar, ChevronRight, DollarSign, TrendingDown, UserPlus } from 'lucide-react'
+import { RegistrosPontoCard } from '@/components/ponto/RegistrosPontoCard'
+
+const PERFIS_PONTO = ['admin', 'financeiro', 'medico_admin']
 
 export interface AgendamentoItem {
   id: string
@@ -32,6 +35,15 @@ interface Props {
   papelUsuario: string
 }
 
+const BORDA_STATUS: Record<string, string> = {
+  agendado: 'border-primary',
+  confirmado: 'border-primary',
+  em_atendimento: 'border-amber-400',
+  concluido: 'border-green-500',
+  cancelado: 'border-red-400',
+  falta: 'border-red-400',
+}
+
 function saudacaoPorHora(): string {
   const h = new Date().getHours()
   if (h >= 5 && h < 12) return 'Bom dia'
@@ -44,7 +56,7 @@ function primeiroNomeCapitalizado(nome: string): string {
   return primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase()
 }
 
-export function DashboardClient({ kpis, agendamentosHoje, agendamentosRecentes, chartData, nomeUsuario, papelUsuario }: Props) {
+export function InicioClient({ kpis, agendamentosHoje, agendamentosRecentes, chartData, nomeUsuario, papelUsuario }: Props) {
   const [saudacao, setSaudacao] = useState('')
 
   useEffect(() => {
@@ -221,16 +233,12 @@ export function DashboardClient({ kpis, agendamentosHoje, agendamentosRecentes, 
               <h3 className="font-semibold text-[#1A1A2E] text-[13px]">Agenda de Hoje</h3>
               <span className="badge-info">{agendamentosHoje.length} TOTAL</span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {agendamentosHoje.slice(0, 4).map(ag => (
-                <div key={ag.id} className="flex items-start gap-2 py-2 border-b border-[#F0F2FF] last:border-0">
-                  <span className="text-[11px] text-[#9CA3AF] font-medium w-10 flex-shrink-0 mt-0.5">
-                    {formatTime(ag.data_hora_inicio)}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-semibold text-[#1A1A2E] truncate">{ag.paciente?.nome ?? '—'}</p>
-                    <p className="text-[11px] text-[#9CA3AF] truncate">{ag.servico?.nome ?? '—'}</p>
-                  </div>
+                <div key={ag.id} className={`pl-3 border-l-2 ${BORDA_STATUS[ag.status] ?? 'border-primary'}`}>
+                  <p className="text-[11px] text-primary font-semibold">{formatTime(ag.data_hora_inicio)}</p>
+                  <p className="text-[13px] font-semibold text-[#1A1A2E] truncate">{ag.paciente?.nome ?? '—'}</p>
+                  <p className="text-[11px] text-[#9CA3AF] truncate">{ag.servico?.nome ?? '—'}</p>
                 </div>
               ))}
               {agendamentosHoje.length === 0 && (
@@ -282,6 +290,9 @@ export function DashboardClient({ kpis, agendamentosHoje, agendamentosRecentes, 
           </table>
         </div>
       </div>
+
+      {/* Registros de ponto — apenas perfis de gestão */}
+      {PERFIS_PONTO.includes(papelUsuario) && <RegistrosPontoCard />}
     </div>
   )
 }
