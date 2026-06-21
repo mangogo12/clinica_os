@@ -40,6 +40,7 @@ export function Sidebar({ nomeClinica, nomeUsuario, papelUsuario, avatarUrl, use
   const [stats, setStats] = useState<{ diasTrabalhados: number; pacientesAtendidos: number } | null>(null)
   const [saidaRegistrada, setSaidaRegistrada] = useState(saidaRegistradaEm)
   const [registrandoSaida, setRegistrandoSaida] = useState(false)
+  const [confirmarSaida, setConfirmarSaida] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   async function handleLogout() {
@@ -61,6 +62,7 @@ export function Sidebar({ nomeClinica, nomeUsuario, papelUsuario, avatarUrl, use
       setSaidaRegistrada(data.registrado_em)
     }
     setRegistrandoSaida(false)
+    setConfirmarSaida(false)
   }
 
   async function abrirPopup() {
@@ -173,19 +175,20 @@ export function Sidebar({ nomeClinica, nomeUsuario, papelUsuario, avatarUrl, use
         </div>
 
         <button
-          onClick={e => { e.stopPropagation(); handleRegistrarSaida() }}
-          disabled={registrandoSaida || !!saidaRegistrada}
+          onClick={e => { e.stopPropagation(); if (!saidaRegistrada) setConfirmarSaida(true) }}
+          disabled={!!saidaRegistrada}
           className={cn(
             'mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors disabled:cursor-default',
             saidaRegistrada
               ? 'bg-white/5 text-blue-300'
-              : 'bg-white/10 text-white hover:bg-white/20 disabled:opacity-60',
+              : 'bg-white/10 text-white hover:bg-white/20',
           )}
           title="Registrar saída do expediente"
         >
           {saidaRegistrada
             ? <><Check size={12} /> Saída às {formatTime(saidaRegistrada)}</>
-            : <><Clock size={12} /> {registrandoSaida ? 'Registrando...' : 'Registrar saída'}</>
+            : <><Clock size={12} /> Registrar saída</>
+
           }
         </button>
       </div>
@@ -255,6 +258,41 @@ export function Sidebar({ nomeClinica, nomeUsuario, papelUsuario, avatarUrl, use
 
         {/* Overlay para fechar */}
         <div className="fixed inset-0 -z-10" onClick={() => setPopupAberto(false)} />
+      </div>
+    )}
+
+    {/* Modal de confirmação de saída */}
+    {confirmarSaida && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1A1A2E]/60 backdrop-blur-sm p-4">
+        <div className="bg-white rounded-2xl shadow-modal w-full max-w-sm p-6 text-center">
+          <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <LogOut size={22} className="text-red-500" />
+          </div>
+          <h2 className="text-[18px] font-bold text-[#1A1A2E] mb-1">Confirmar saída</h2>
+          <p className="text-[13px] text-[#9CA3AF] mb-1">
+            {new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }).format(new Date())}
+            {' — '}
+            {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+          <p className="text-[13px] text-[#444654] mb-5">
+            Tem certeza que deseja registrar sua saída? Esta ação não pode ser desfeita.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setConfirmarSaida(false)}
+              className="flex-1 py-2.5 rounded-lg text-[13px] font-semibold border border-[#E5E7EB] text-[#444654] hover:bg-[#F0F2FF] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleRegistrarSaida}
+              disabled={registrandoSaida}
+              className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-60 text-[13px]"
+            >
+              {registrandoSaida ? 'Registrando...' : 'Confirmar saída'}
+            </button>
+          </div>
+        </div>
       </div>
     )}
     </>

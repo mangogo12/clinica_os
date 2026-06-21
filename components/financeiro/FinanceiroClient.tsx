@@ -8,13 +8,21 @@ import {
 import { Download, Plus, TrendingDown, TrendingUp, Wallet, CreditCard } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
-const CHART_DATA = [
-  { data: '01 Jan', receitas: 1200, despesas: 400 },
-  { data: '07 Jan', receitas: 2800, despesas: 900 },
-  { data: '14 Jan', receitas: 3500, despesas: 1200 },
-  { data: '21 Jan', receitas: 5200, despesas: 1800 },
-  { data: '28 Jan', receitas: 4100, despesas: 1400 },
-]
+function buildChartData(transacoes: Transacao[]) {
+  if (transacoes.length === 0) return []
+  const byWeek = new Map<string, { receitas: number; despesas: number }>()
+  for (const t of transacoes) {
+    const d = new Date(t.data_transacao)
+    const weekStart = new Date(d)
+    weekStart.setDate(d.getDate() - d.getDay())
+    const label = weekStart.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+    const entry = byWeek.get(label) ?? { receitas: 0, despesas: 0 }
+    if (t.tipo === 'entrada') entry.receitas += t.valor
+    else entry.despesas += t.valor
+    byWeek.set(label, entry)
+  }
+  return Array.from(byWeek.entries()).map(([data, v]) => ({ data, ...v }))
+}
 
 const STATUS_BADGE: Record<string, string> = {
   confirmado: 'badge-success',
@@ -59,15 +67,17 @@ interface Props {
 export function FinanceiroClient({ transacoes, contas, kpis }: Props) {
   const [periodo, setPeriodo] = useState('30d')
   const saldo = kpis.entradas - kpis.saidas
-  const ticketMedio = transacoes.filter(t => t.tipo === 'entrada').length > 0
-    ? kpis.entradas / transacoes.filter(t => t.tipo === 'entrada').length
-    : 0
+  const totalEntradas = transacoes.filter(t => t.tipo === 'entrada').length
+  const ticketMedio = totalEntradas > 0 ? kpis.entradas / totalEntradas : 0
+  const chartData = buildChartData(transacoes)
+
+  const saldoStatus = saldo > 0 ? 'Positivo' : saldo < 0 ? 'Negativo' : '—'
 
   const kpiCards = [
     {
       label: 'Entradas',
       value: formatCurrency(kpis.entradas),
-      delta: '+12,5%',
+      delta: totalEntradas > 0 ? `${totalEntradas} lançamento${totalEntradas > 1 ? 's' : ''}` : '—',
       positive: true,
       icon: <TrendingUp size={18} className="text-green-600" />,
       bg: 'bg-green-50',
@@ -76,7 +86,7 @@ export function FinanceiroClient({ transacoes, contas, kpis }: Props) {
     {
       label: 'Saídas',
       value: formatCurrency(kpis.saidas),
-      delta: '-4,2%',
+      delta: kpis.saidas > 0 ? `${transacoes.filter(t => t.tipo === 'saida').length} lançamento(s)` : '—',
       positive: false,
       icon: <TrendingDown size={18} className="text-red-500" />,
       bg: 'bg-red-50',
@@ -85,8 +95,8 @@ export function FinanceiroClient({ transacoes, contas, kpis }: Props) {
     {
       label: 'Saldo Total',
       value: formatCurrency(saldo),
-      delta: 'Saudável',
-      positive: true,
+      delta: saldoStatus,
+      positive: saldo >= 0,
       icon: <Wallet size={18} className="text-blue-600" />,
       bg: 'bg-blue-50',
       textColor: 'text-blue-600',
@@ -94,7 +104,7 @@ export function FinanceiroClient({ transacoes, contas, kpis }: Props) {
     {
       label: 'Ticket Médio',
       value: formatCurrency(ticketMedio),
-      delta: '+R$ 10',
+      delta: totalEntradas > 0 ? `base: ${totalEntradas}` : '—',
       positive: true,
       icon: <CreditCard size={18} className="text-orange-500" />,
       bg: 'bg-orange-50',
@@ -157,29 +167,35 @@ export function FinanceiroClient({ transacoes, contas, kpis }: Props) {
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block"/>Despesas</span>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={CHART_DATA} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="gradReceita" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3B5BDB" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#3B5BDB" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="gradDespesa" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#EF4444" stopOpacity={0.15}/>
-                  <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F0F2FF" />
-              <XAxis dataKey="data" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={v => `${v/1000}k`} />
-              <Tooltip
-                formatter={(v, n) => [formatCurrency(Number(v ?? 0)), String(n) === 'receitas' ? 'Receitas' : 'Despesas']}
-                contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
-              />
-              <Area type="monotone" dataKey="receitas" stroke="#3B5BDB" strokeWidth={2} fill="url(#gradReceita)" strokeDasharray="0" dot={false} />
-              <Area type="monotone" dataKey="despesas" stroke="#EF4444" strokeWidth={1.5} fill="url(#gradDespesa)" strokeDasharray="4 2" dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradReceita" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B5BDB" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#3B5BDB" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="gradDespesa" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#EF4444" stopOpacity={0.15}/>
+                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F0F2FF" />
+                <XAxis dataKey="data" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={v => `${v/1000}k`} />
+                <Tooltip
+                  formatter={(v, n) => [formatCurrency(Number(v ?? 0)), String(n) === 'receitas' ? 'Receitas' : 'Despesas']}
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                />
+                <Area type="monotone" dataKey="receitas" stroke="#3B5BDB" strokeWidth={2} fill="url(#gradReceita)" strokeDasharray="0" dot={false} />
+                <Area type="monotone" dataKey="despesas" stroke="#EF4444" strokeWidth={1.5} fill="url(#gradDespesa)" strokeDasharray="4 2" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[200px] text-[13px] text-[#9CA3AF]">
+              Nenhum dado para exibir no período
+            </div>
+          )}
         </div>
 
         {/* Próximos Vencimentos */}
